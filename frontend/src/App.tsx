@@ -11,7 +11,6 @@ const queryClient = new QueryClient();
 
 const ANALYSIS_TIMEOUT_SECONDS = 60;
 
-// Zodスキーマの定義
 const AnalysisFormSchema = z.object({
   data_size: z.number().int().positive().max(10000),
 });
@@ -33,7 +32,6 @@ const AnalysisResultSchema = z.object({
     .optional(),
 });
 
-// 型の導出
 type AnalysisFormData = z.infer<typeof AnalysisFormSchema>;
 type AnalysisTask = z.infer<typeof AnalysisTaskSchema>;
 type AnalysisResult = z.infer<typeof AnalysisResultSchema>;

@@ -1,0 +1,29 @@
+name: Lint Backend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/ci.yaml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.19"
+          enable-cache: true
+      - name: lint
+        run: make lint-ci

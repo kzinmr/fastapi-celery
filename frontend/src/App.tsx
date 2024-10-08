@@ -55,7 +55,10 @@ function App() {
 }
 
 function AnalyzeDataForm() {
-  const [taskId, setTaskId] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(() => {
+    // Persistent state across page reloads
+    return localStorage.getItem('analysisTaskId');
+  });
   const [formData, setFormData] = useState<AnalysisFormData>({
     data_size: 1000,
   });
@@ -82,6 +85,7 @@ function AnalyzeDataForm() {
     },
     onSuccess: (data) => {
       setTaskId(data.task_id);
+      localStorage.setItem('analysisTaskId', data.task_id);
     },
     onError: (error) => {
       console.error("Analysis task error:", error);
@@ -140,7 +144,18 @@ function AnalyzeDataForm() {
         </button>
       </form>
       {taskId && (
-        <AnalysisResult taskId={taskId} timeout={ANALYSIS_TIMEOUT_SECONDS} />
+        <>
+          <AnalysisResult taskId={taskId} timeout={ANALYSIS_TIMEOUT_SECONDS} />
+          <button
+            onClick={() => {
+              setTaskId(null);
+              localStorage.removeItem('analysisTaskId');
+            }}
+            className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Clear Result
+          </button>
+        </>
       )}
     </div>
   );

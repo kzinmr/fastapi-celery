@@ -23,12 +23,14 @@ const AnalysisResultSchema = z.object({
   state: z.enum(["PENDING", "PROGRESS", "SUCCESS", "FAILURE"]),
   current: z.number().int().optional(),
   total: z.number().int().optional(),
+  status: z.string().optional(),
   result: z
     .object({
       analyzed_items: z.number().int(),
       anomalies_detected: z.number().int(),
       processing_time: z.number(),
     })
+    .nullable()
     .optional(),
 });
 
@@ -53,7 +55,10 @@ function App() {
 }
 
 function AnalyzeDataForm() {
-  const [taskId, setTaskId] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(() => {
+    // Persistent state across page reloads
+    return localStorage.getItem('analysisTaskId');
+  });
   const [formData, setFormData] = useState<AnalysisFormData>({
     data_size: 1000,
   });
@@ -76,10 +81,16 @@ function AnalyzeDataForm() {
         throw new Error("Network response was not ok");
       }
       const responseData = await response.json() as Record<string, unknown>;
-      return AnalysisTaskSchema.parse(responseData);
+      try {
+        return AnalysisTaskSchema.parse(responseData);
+      } catch (parseError) {
+        console.error("Failed to parse response in mutation:", parseError);
+        throw new Error("Invalid response format");
+      }
     },
     onSuccess: (data) => {
       setTaskId(data.task_id);
+      localStorage.setItem('analysisTaskId', data.task_id);
     },
     onError: (error) => {
       console.error("Analysis task error:", error);
@@ -138,7 +149,18 @@ function AnalyzeDataForm() {
         </button>
       </form>
       {taskId && (
-        <AnalysisResult taskId={taskId} timeout={ANALYSIS_TIMEOUT_SECONDS} />
+        <>
+          <AnalysisResult taskId={taskId} timeout={ANALYSIS_TIMEOUT_SECONDS} />
+          <button
+            onClick={() => {
+              setTaskId(null);
+              localStorage.removeItem('analysisTaskId');
+            }}
+            className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Clear Result
+          </button>
+        </>
       )}
     </div>
   );
@@ -158,7 +180,12 @@ function AnalysisResult({ taskId, timeout }: AnalysisResultProps) {
         throw new Error("Network response was not ok");
       }
       const responseData = await response.json() as Record<string, unknown>;
-      return AnalysisResultSchema.parse(responseData);
+      try {
+        return AnalysisResultSchema.parse(responseData);
+      } catch (parseError) {
+        console.error("Failed to parse response in query:", parseError);
+        throw new Error("Invalid response format");
+      }
     },
     refetchInterval: (query) => {
       const data = query.state.data;

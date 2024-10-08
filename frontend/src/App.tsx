@@ -72,12 +72,12 @@ function AnalyzeDataForm() {
       });
       if (!response.ok) {
         if (response.status === 422) {
-          const errorData = await response.json();
+          const errorData = await response.json() as Record<string, unknown>;
           throw new Error(JSON.stringify(errorData) || "Validation error");
         }
         throw new Error("Network response was not ok");
       }
-      const responseData = await response.json();
+      const responseData = await response.json() as Record<string, unknown>;
       return AnalysisTaskSchema.parse(responseData);
     },
     onSuccess: (data) => {
@@ -159,7 +159,7 @@ function AnalysisResult({ taskId, timeout }: AnalysisResultProps) {
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-      const responseData = await response.json();
+      const responseData = await response.json() as Record<string, unknown>;
       return AnalysisResultSchema.parse(responseData);
     },
     refetchInterval: (query) => {

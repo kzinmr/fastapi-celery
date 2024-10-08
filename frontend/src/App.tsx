@@ -23,12 +23,14 @@ const AnalysisResultSchema = z.object({
   state: z.enum(["PENDING", "PROGRESS", "SUCCESS", "FAILURE"]),
   current: z.number().int().optional(),
   total: z.number().int().optional(),
+  status: z.string().optional(),
   result: z
     .object({
       analyzed_items: z.number().int(),
       anomalies_detected: z.number().int(),
       processing_time: z.number(),
     })
+    .nullable()
     .optional(),
 });
 
@@ -158,7 +160,12 @@ function AnalysisResult({ taskId, timeout }: AnalysisResultProps) {
         throw new Error("Network response was not ok");
       }
       const responseData = await response.json() as Record<string, unknown>;
-      return AnalysisResultSchema.parse(responseData);
+      try {
+        return AnalysisResultSchema.parse(responseData);
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        throw new Error("Invalid response format");
+      }
     },
     refetchInterval: (query) => {
       const data = query.state.data;

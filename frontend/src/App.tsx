@@ -81,7 +81,12 @@ function AnalyzeDataForm() {
         throw new Error("Network response was not ok");
       }
       const responseData = await response.json() as Record<string, unknown>;
-      return AnalysisTaskSchema.parse(responseData);
+      try {
+        return AnalysisTaskSchema.parse(responseData);
+      } catch (parseError) {
+        console.error("Failed to parse response in mutation:", parseError);
+        throw new Error("Invalid response format");
+      }
     },
     onSuccess: (data) => {
       setTaskId(data.task_id);
@@ -178,7 +183,7 @@ function AnalysisResult({ taskId, timeout }: AnalysisResultProps) {
       try {
         return AnalysisResultSchema.parse(responseData);
       } catch (parseError) {
-        console.error("Failed to parse response:", parseError);
+        console.error("Failed to parse response in query:", parseError);
         throw new Error("Invalid response format");
       }
     },

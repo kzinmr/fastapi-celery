@@ -57,7 +57,7 @@ function App() {
 function AnalyzeDataForm() {
   const [taskId, setTaskId] = useState<string | null>(() => {
     // Persistent state across page reloads
-    return localStorage.getItem('analysisTaskId');
+    return localStorage.getItem("analysisTaskId");
   });
   const [formData, setFormData] = useState<AnalysisFormData>({
     data_size: 1000,
@@ -75,12 +75,12 @@ function AnalyzeDataForm() {
       });
       if (!response.ok) {
         if (response.status === 422) {
-          const errorData = await response.json() as Record<string, unknown>;
+          const errorData = (await response.json()) as Record<string, unknown>;
           throw new Error(JSON.stringify(errorData) || "Validation error");
         }
         throw new Error("Network response was not ok");
       }
-      const responseData = await response.json() as Record<string, unknown>;
+      const responseData = (await response.json()) as Record<string, unknown>;
       try {
         return AnalysisTaskSchema.parse(responseData);
       } catch (parseError) {
@@ -90,7 +90,7 @@ function AnalyzeDataForm() {
     },
     onSuccess: (data) => {
       setTaskId(data.task_id);
-      localStorage.setItem('analysisTaskId', data.task_id);
+      localStorage.setItem("analysisTaskId", data.task_id);
     },
     onError: (error) => {
       console.error("Analysis task error:", error);
@@ -154,7 +154,7 @@ function AnalyzeDataForm() {
           <button
             onClick={() => {
               setTaskId(null);
-              localStorage.removeItem('analysisTaskId');
+              localStorage.removeItem("analysisTaskId");
             }}
             className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
           >
@@ -179,7 +179,7 @@ function AnalysisResult({ taskId, timeout }: AnalysisResultProps) {
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-      const responseData = await response.json() as Record<string, unknown>;
+      const responseData = (await response.json()) as Record<string, unknown>;
       try {
         return AnalysisResultSchema.parse(responseData);
       } catch (parseError) {

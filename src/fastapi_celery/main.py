@@ -24,6 +24,11 @@ class TaskResultResponse(BaseModel):
 app = FastAPI()
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
 @app.post("/api/tasks/analyze", response_model=AnalysisTaskResponse)
 async def start_analysis(request: AnalysisRequest):
     task = analyze_data.delay(request.data_size)

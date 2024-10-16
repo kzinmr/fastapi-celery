@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig((): UserConfig => {
   const isDevelopment = process.env.NODE_ENV === "development";
   const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 5174;
-  const serverUrl = process.env.SERVER_URL ?? "http://localhost:8000";
+  const serverUrl = process.env.BACKEND_URL ?? "http://localhost:5175";
 
   return {
     plugins: [react()],

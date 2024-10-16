@@ -192,7 +192,7 @@ function AnalysisResult({ taskId, timeout }: AnalysisResultProps) {
       if (data?.state === "SUCCESS" || data?.state === "FAILURE") {
         return false;
       }
-      return Math.min(500 * Math.pow(1.5, data?.current || 0), 5000);
+      return Math.min(1000 * Math.pow(1.5, data?.current || 0), 10000);
     },
     retry: true,
     retryDelay: 1000,

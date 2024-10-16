@@ -822,12 +822,12 @@ module "my_ecs_task_execution_role" {
 
 ## Cluster
 resource "aws_ecs_cluster" "my_ecs_cluster" {
-  name = "${var.project_name}-ecs-cluster"
+  name = "${var.environment}-${var.project_name}-main"
 }
 
 ## Task Definition
 resource "aws_ecs_task_definition" "my_frontend_task_definition" {
-  family                   = "${var.environment}-${var.project_name}-task"
+  family                   = "${var.environment}-${var.project_name}-frontend"
   cpu                      = 1024
   memory                   = 2048
   runtime_platform {
@@ -874,7 +874,7 @@ resource "aws_ecs_task_definition" "my_frontend_task_definition" {
   ])
 }
 resource "aws_ecs_task_definition" "my_backend_task_definition" {
-  family                   = "${var.environment}-${var.project_name}-task"
+  family                   = "${var.environment}-${var.project_name}-backend"
   cpu                      = 1024
   memory                   = 2048
   runtime_platform {
@@ -918,7 +918,7 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
 
 ## ECS Service
 resource "aws_ecs_service" "my_ecs_service_frontend" {
-  name                              = "${var.project_name}-service-frontend"
+  name                              = "${var.environment}-${var.project_name}-main/frontend"
   cluster                           = aws_ecs_cluster.my_ecs_cluster.id
   task_definition                   = aws_ecs_task_definition.my_frontend_task_definition.arn
   desired_count                     = 1
@@ -937,7 +937,7 @@ resource "aws_ecs_service" "my_ecs_service_frontend" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.my_target_group_frontend.arn
-    container_name   = "${var.project_name}-frontend"
+    container_name   = "frontend"
     container_port   = 5174
   }
 
@@ -946,7 +946,7 @@ resource "aws_ecs_service" "my_ecs_service_frontend" {
   }
 }
 resource "aws_ecs_service" "my_ecs_service_backend" {
-  name                              = "${var.project_name}-service-backend"
+  name                              = "${var.environment}-${var.project_name}-main/backend"
   cluster                           = aws_ecs_cluster.my_ecs_cluster.id
   task_definition                   = aws_ecs_task_definition.my_backend_task_definition.arn
   desired_count                     = 1
@@ -986,56 +986,66 @@ resource "aws_kms_alias" "my_kms_key_alias" {
   name = "alias/${var.project_name}-kms-key"
   target_key_id = aws_kms_key.my_kms_key.key_id
 }
-## KMS Secrets per Environment; See. README.md
-## data "aws_kms_secrets" "my_kms_secrets_dev" {
-##   secret {
-##     name    = "EXAMPLE_KEY"
-##     payload = "AQICAHiVOc0+QxXBi64YqUGPDVl299K4Ex+ZBKQ8s37D08TRRQHeVshV7sH+t4kcm/pvnW8BAAAAeTB3BgkqhkiG9w0BBwagajBoAgEAMGMGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMfoHjuxmMCP005Ad9AgEQgDbvQEpDEow+Evq8M+ia0gdO0DOyzjsBDsLKIm8n1dQjVrKrhr4SPRFCgbqS9NfAeX1x5O3uiVg="
-##   }
-## }
-## SSM Parameter Store via KMS
-## resource "aws_ssm_parameter" "example_key" {
-##   name   = "/backend/EXAMPLE_KEY"
-##   type   = "SecureString"
-##   value  = sensitive(data.aws_kms_secrets.my_kms_secrets_dev.plaintext["EXAMPLE_KEY"])
-##   key_id = aws_kms_key.my_kms_key.arn
-## }
+# KMS Secrets per Environment; See. README.md
+# data "aws_kms_secrets" "my_kms_secrets_dev" {
+#   secret {
+#     name    = "EXAMPLE_KEY"
+#     payload = "AQICAHiVOc0+QxXBi64YqUGPDVl299K4Ex+ZBKQ8s37D08TRRQHeVshV7sH+t4kcm/pvnW8BAAAAeTB3BgkqhkiG9w0BBwagajBoAgEAMGMGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMfoHjuxmMCP005Ad9AgEQgDbvQEpDEow+Evq8M+ia0gdO0DOyzjsBDsLKIm8n1dQjVrKrhr4SPRFCgbqS9NfAeX1x5O3uiVg="
+#   }
+# }
+
+# SSM Parameter Store via KMS
+# resource "aws_ssm_parameter" "example_key" {
+#   name   = "/backend/EXAMPLE_KEY"
+#   type   = "SecureString"
+#   value  = sensitive(data.aws_kms_secrets.my_kms_secrets_dev.plaintext["EXAMPLE_KEY"])
+#   key_id = aws_kms_key.my_kms_key.arn
+# }
 
 # ElastiCache
-resource "aws_elasticache_parameter_group" "my_elasticache_parameter_group" {
-  name   = "${var.project_name}-elasticache-parameter-group"
-  family = "redis7"
+# Start of Selection
+# resource "aws_elasticache_parameter_group" "my_elasticache_parameter_group" {
+#   name   = "${var.project_name}-elasticache-parameter-group"
+#   family = "redis7"
+#
+#   parameter {
+#     name  = "cluster-enabled"
+#     value = "no"
+#   }
+# }
+#
+# resource "aws_elasticache_subnet_group" "my_elasticache_subnet_group" {
+#   name       = "${var.project_name}-elasticache-subnet-group"
+#   subnet_ids = [aws_subnet.my_subnet_private_app_1a.id, aws_subnet.my_subnet_private_app_1c.id]
+# }
+#
+# resource "aws_elasticache_replication_group" "my_elasticache_replication_group" {
+#   replication_group_id = "${var.project_name}-elasticache-replication-group"
+#   description = "Redis without cluster"
+#   engine = "redis"
+#   engine_version = "7.0"
+#   node_type = "cache.t3.medium"
+#   num_cache_clusters = 2
+#   snapshot_window = "09:10-10:10"
+#   snapshot_retention_limit = 7
+#   maintenance_window = "mon:10:40-mon:11:40"
+#   automatic_failover_enabled = true
+#   port = 6379
+#   apply_immediately = true
+#   security_group_ids = [module.my_sg_redis.security_group_id]
+#   parameter_group_name = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
+#   subnet_group_name = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
+# }
+# End of Selection
 
-  parameter {
-    name  = "cluster-enabled"
-    value = "no"
-  }
+
+# outputs.tf
+output "ecr_frontend_repository" {
+  value = module.ecr_frontend.repository_url
 }
-
-resource "aws_elasticache_subnet_group" "my_elasticache_subnet_group" {
-  name       = "${var.project_name}-elasticache-subnet-group"
-  subnet_ids = [aws_subnet.my_subnet_private_app_1a.id, aws_subnet.my_subnet_private_app_1c.id]
+output "ecr_backend_repository" {
+  value = module.ecr_backend.repository_url
 }
-
-resource "aws_elasticache_replication_group" "my_elasticache_replication_group" {
-  replication_group_id = "${var.project_name}-elasticache-replication-group"
-  description = "Redis without cluster"
-  engine = "redis"
-  engine_version = "7.0"
-  node_type = "cache.t3.medium"
-  num_cache_clusters = 2
-  snapshot_window = "09:10-10:10"
-  snapshot_retention_limit = 7
-  maintenance_window = "mon:10:40-mon:11:40"
-  automatic_failover_enabled = true
-  port = 6379
-  apply_immediately = true
-  security_group_ids = [module.my_sg_redis.security_group_id]
-  parameter_group_name = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
-  subnet_group_name = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
-}
-
-
 output "alb_dns_name" {
   value = aws_lb.my_alb.dns_name
 }

@@ -471,30 +471,44 @@ resource "aws_security_group_rule" "fcdemo_sg_vpce_from_sg_management" {
 
 
 # ECR
-resource "aws_ecr_repository" "fcdemo_ecr_repository_backend" {
-  name                 = "fcdemo-ecr-backend"
-  image_tag_mutability = "MUTABLE"
-
+variable "environment" {
+  default = "development"
+}
+variable "project_name" {
+  default = "fcdemo"
+}
+module "ecr_frontend" {
+  source          = "./ecr"
+  repository_name = "${var.environment}/${var.project_name}/frontend"
   tags = {
-    Name = "fcdemo-ecr-backend"
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
-
-resource "aws_ecr_repository" "fcdemo_ecr_repository_frontend" {
-  name                 = "fcdemo-ecr-frontend"
-  image_tag_mutability = "MUTABLE"
-
+module "ecr_backend" {
+  source          = "./ecr"
+  repository_name = "${var.environment}/${var.project_name}/backend"
   tags = {
-    Name = "fcdemo-ecr-frontend"
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
-
-resource "aws_ecr_repository" "fcdemo_ecr_repository_base" {
-  name                 = "fcdemo-ecr-base"
-  image_tag_mutability = "MUTABLE"
-
+module "ecr_base_nginx" {
+  source          = "./ecr"
+  repository_name = "${var.environment}/${var.project_name}/base/nginx"
+  image_count_to_keep = 3
   tags = {
-    Name = "fcdemo-ecr-base"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+module "ecr_base_bastion" {
+  source          = "./ecr"
+  repository_name = "${var.environment}/${var.project_name}/base/bastion"
+  image_count_to_keep = 3
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
 
@@ -801,7 +815,7 @@ resource "aws_ecs_task_definition" "fcdemo_front_app_task_definition" {
   container_definitions    = jsonencode([
     {
       name  = "fcdemo-front-app"
-      image = "${aws_ecr_repository.fcdemo_ecr_repository_frontend.repository_url}:latest"
+      image = "${module.ecr_frontend.repository_url}:latest"
       cpu   = 256
       memory = 512
       essential = true
@@ -843,7 +857,7 @@ resource "aws_ecs_task_definition" "fcdemo_app_task_definition" {
   container_definitions    = jsonencode([
     {
       name  = "fcdemo-backend-app"
-      image = "${aws_ecr_repository.fcdemo_ecr_repository_backend.repository_url}:latest"
+      image = "${module.ecr_backend.repository_url}:latest"
       cpu   = 768
       memory = 1536
       essential = true

@@ -2,7 +2,7 @@
 interface ImportMetaEnv {
   readonly NODE_ENV: string;
   readonly APP_PORT?: string;
-  readonly SERVER_URL?: string;
+  readonly BACKEND_URL?: string;
 }
 
 interface ImportMeta {

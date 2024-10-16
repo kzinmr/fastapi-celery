@@ -1,9 +1,9 @@
 services:
   backend:
     build: .
-    command: fastapi dev --host 0.0.0.0 --port 8000 src/fastapi_celery/main.py
+    command: fastapi dev --host 0.0.0.0 --port 5175 src/fastapi_celery/main.py
     ports:
-      - "8000:8000"
+      - "5175:5175"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -43,7 +43,7 @@ services:
     ports:
       - "5174:5174"
     environment:
-      - SERVER_URL=http://backend:8000
+      - BACKEND_URL=http://backend:5175
       - APP_PORT=5174
     depends_on:
       - backend

@@ -27,7 +27,7 @@ $ aws kms decrypt --ciphertext-blob fileb://<(cat enc.txt|base64 -d) --region ap
 
 ```bash
 $ AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-$ aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin https://${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/development/fcdemo-base
+$ aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin https://${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/development/fcdemo/backend
 ```
 
 # ECS

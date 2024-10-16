@@ -66,7 +66,7 @@ function AnalyzeDataForm() {
 
   const analyzeMutation = useMutation<AnalysisTask, Error, AnalysisFormData>({
     mutationFn: async (data) => {
-      const response = await fetch("/api/tasks/analyze", {
+      const response = await fetch(`/api/tasks/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

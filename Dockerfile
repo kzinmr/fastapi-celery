@@ -16,6 +16,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ENV PATH="/app/.venv/bin:$PATH"
 # Reset the entrypoint, don't invoke `uv`
+
+EXPOSE 5175
+
 ENTRYPOINT []
 
-CMD ["fastapi", "dev", "--host", "0.0.0.0", "src/fastapi_celery/main.py"]
+CMD ["fastapi", "dev", "--host", "0.0.0.0", "--port", "5175", "src/fastapi_celery/main.py"]

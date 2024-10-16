@@ -49,7 +49,6 @@ resource "aws_vpc" "my_vpc" {
 }
 
 # Private Subnets
-## Container Subnets
 resource "aws_subnet" "my_subnet_private_app_1a" {
   vpc_id            = aws_vpc.my_vpc.id
   cidr_block        = var.private_subnet_cidrs[0]
@@ -93,7 +92,6 @@ resource "aws_subnet" "my_subnet_private_egress_1c" {
 }
 
 # Public Subnets
-## Ingress Subnets
 resource "aws_subnet" "my_subnet_public_ingress_1a" {
   vpc_id                  = aws_vpc.my_vpc.id
   cidr_block              = var.public_subnet_cidrs[0]
@@ -115,49 +113,48 @@ resource "aws_subnet" "my_subnet_public_ingress_1c" {
     Type = "Public"
   }
 }
-## DB Subnets
-# resource "aws_subnet" "my_subnet_private_db_1a" {
-#   vpc_id            = aws_vpc.my_vpc.id
-#   cidr_block        = "10.0.16.0/24"
-#   availability_zone = data.aws_availability_zones.available.names[0]
-#
-#   tags = {
-#     Name = "${var.project_name}-subnet-private-db-1a"
-#     Type = "Isolated"
-#   }
-# }
-# resource "aws_subnet" "my_subnet_private_db_1c" {
-#   vpc_id            = aws_vpc.my_vpc.id
-#   cidr_block        = "10.0.17.0/24"
-#   availability_zone = data.aws_availability_zones.available.names[1]
-#
-#   tags = {
-#     Name = "${var.project_name}-subnet-private-db-1c"
-#     Type = "Isolated"
-#   }
-# }
-## Management Subnets
-# resource "aws_subnet" "my_subnet_public_management_1a" {
-#   vpc_id                  = aws_vpc.my_vpc.id
-#   cidr_block              = "10.0.240.0/24"
-#   availability_zone       = data.aws_availability_zones.available.names[0]
-#   map_public_ip_on_launch = true
-#   tags = {
-#     Name = "${var.project_name}-subnet-public-management-1a"
-#     Type = "Public"
-#   }
-# }
-# resource "aws_subnet" "my_subnet_public_management_1c" {
-#   vpc_id                  = aws_vpc.my_vpc.id
-#   cidr_block              = "10.0.241.0/24"
-#   availability_zone       = data.aws_availability_zones.available.names[1]
-#   map_public_ip_on_launch = true
-#
-#   tags = {
-#     Name = "${var.project_name}-subnet-public-management-1c"
-#     Type = "Public"
-#   }
-# }
+
+// resource "aws_subnet" "my_subnet_private_db_1a" {
+//   vpc_id            = aws_vpc.my_vpc.id
+//   cidr_block        = "10.0.16.0/24"
+//   availability_zone = data.aws_availability_zones.available.names[0]
+//
+//   tags = {
+//     Name = "${var.project_name}-subnet-private-db-1a"
+//     Type = "Isolated"
+//   }
+// }
+// resource "aws_subnet" "my_subnet_private_db_1c" {
+//   vpc_id            = aws_vpc.my_vpc.id
+//   cidr_block        = "10.0.17.0/24"
+//   availability_zone = data.aws_availability_zones.available.names[1]
+//
+//   tags = {
+//     Name = "${var.project_name}-subnet-private-db-1c"
+//     Type = "Isolated"
+//   }
+// }
+// resource "aws_subnet" "my_subnet_public_management_1a" {
+//   vpc_id                  = aws_vpc.my_vpc.id
+//   cidr_block              = "10.0.240.0/24"
+//   availability_zone       = data.aws_availability_zones.available.names[0]
+//   map_public_ip_on_launch = true
+//   tags = {
+//     Name = "${var.project_name}-subnet-public-management-1a"
+//     Type = "Public"
+//   }
+// }
+// resource "aws_subnet" "my_subnet_public_management_1c" {
+//   vpc_id                  = aws_vpc.my_vpc.id
+//   cidr_block              = "10.0.241.0/24"
+//   availability_zone       = data.aws_availability_zones.available.names[1]
+//   map_public_ip_on_launch = true
+//
+//   tags = {
+//     Name = "${var.project_name}-subnet-public-management-1c"
+//     Type = "Public"
+//   }
+// }
 
 
 # Internet Gateway
@@ -193,14 +190,14 @@ resource "aws_route_table_association" "public_1a" {
   route_table_id = aws_route_table.my_route_public.id
 }
 
-# resource "aws_route_table_association" "management_1a" {
-#   subnet_id      = aws_subnet.my_subnet_public_management_1a.id
-#   route_table_id = aws_route_table.my_route_public.id
-# }
-# resource "aws_route_table_association" "management_1c" {
-#   subnet_id      = aws_subnet.my_subnet_public_management_1c.id
-#   route_table_id = aws_route_table.my_route_public.id
-# }
+// resource "aws_route_table_association" "management_1a" {
+//   subnet_id      = aws_subnet.my_subnet_public_management_1a.id
+//   route_table_id = aws_route_table.my_route_public.id
+// }
+// resource "aws_route_table_association" "management_1c" {
+//   subnet_id      = aws_subnet.my_subnet_public_management_1c.id
+//   route_table_id = aws_route_table.my_route_public.id
+// }
 
 ## Private Subnetのルートテーブル
 ## コンテナ用ルートテーブル
@@ -226,22 +223,21 @@ resource "aws_route_table_association" "my_route_backend_association_1c" {
   route_table_id = aws_route_table.my_route_backend_1c.id
 }
 
-## DB用のルートテーブル
-# resource "aws_route_table" "my_route_db" {
-#   vpc_id = aws_vpc.my_vpc.id
-#
-#   tags = {
-#     Name = "${var.project_name}-route-db"
-#   }
-# }
-# resource "aws_route_table_association" "my_route_db_association_1a" {
-#   subnet_id      = aws_subnet.my_subnet_private_db_1a.id
-#   route_table_id = aws_route_table.my_route_db.id
-# }
-# resource "aws_route_table_association" "my_route_db_association_1c" {
-#   subnet_id      = aws_subnet.my_subnet_private_db_1c.id
-#   route_table_id = aws_route_table.my_route_db.id
-# }
+// resource "aws_route_table" "my_route_db" {
+//   vpc_id = aws_vpc.my_vpc.id
+//
+//   tags = {
+//     Name = "${var.project_name}-route-db"
+//   }
+// }
+// resource "aws_route_table_association" "my_route_db_association_1a" {
+//   subnet_id      = aws_subnet.my_subnet_private_db_1a.id
+//   route_table_id = aws_route_table.my_route_db.id
+// }
+// resource "aws_route_table_association" "my_route_db_association_1c" {
+//   subnet_id      = aws_subnet.my_subnet_private_db_1c.id
+//   route_table_id = aws_route_table.my_route_db.id
+// }
 
 # NAT Gateway
 resource "aws_eip" "my_eip_nat_gateway_1a" {
@@ -264,25 +260,25 @@ resource "aws_route" "my_route_backend_nat_gateway_1a" {
   destination_cidr_block = "0.0.0.0/0"
 }
 
-# resource "aws_eip" "my_eip_nat_gateway_1c" {
-#   domain     = "vpc"
-#   depends_on = [aws_internet_gateway.my_igw]
-# }
-# resource "aws_nat_gateway" "my_nat_gateway_1c" {
-#   allocation_id = aws_eip.my_eip_nat_gateway_1c.id
-#   subnet_id     = aws_subnet.my_subnet_public_ingress_1c.id
-#
-#   depends_on = [aws_internet_gateway.my_igw]
-#
-#   tags = {
-#     Name = "${var.project_name}-nat-gateway-1c"
-#   }
-# }
-# resource "aws_route" "my_route_backend_nat_gateway_1c" {
-#   route_table_id         = aws_route_table.my_route_backend_1c.id
-#   nat_gateway_id         = aws_nat_gateway.my_nat_gateway_1c.id
-#   destination_cidr_block = "0.0.0.0/0"
-# }
+resource "aws_eip" "my_eip_nat_gateway_1c" {
+  domain     = "vpc"
+  depends_on = [aws_internet_gateway.my_igw]
+}
+resource "aws_nat_gateway" "my_nat_gateway_1c" {
+  allocation_id = aws_eip.my_eip_nat_gateway_1c.id
+  subnet_id     = aws_subnet.my_subnet_public_ingress_1c.id
+
+  depends_on = [aws_internet_gateway.my_igw]
+
+  tags = {
+    Name = "${var.project_name}-nat-gateway-1c"
+  }
+}
+resource "aws_route" "my_route_backend_nat_gateway_1c" {
+  route_table_id         = aws_route_table.my_route_backend_1c.id
+  nat_gateway_id         = aws_nat_gateway.my_nat_gateway_1c.id
+  destination_cidr_block = "0.0.0.0/0"
+}
 
 # Security Groups
 module "my_sg_ingress" {
@@ -496,25 +492,6 @@ module "ecr_backend" {
     Project     = var.project_name
   }
 }
-module "ecr_base_nginx" {
-  source              = "./ecr"
-  repository_name     = "${var.environment}/${var.project_name}/base/nginx"
-  image_count_to_keep = 3
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-  }
-}
-
-# module "ecr_base_bastion" {
-#   source          = "./ecr"
-#   repository_name = "${var.environment}/${var.project_name}/base/bastion"
-#   image_count_to_keep = 3
-#   tags = {
-#     Environment = var.environment
-#     Project     = var.project_name
-#   }
-# }
 
 # VPC Endpoint for ECS & ECR
 # See. https://docs.aws.amazon.com/ja_jp/AmazonECR/latest/userguide/vpc-endpoints.html
@@ -598,7 +575,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "my_alb_log_lifecycle" {
   rule {
     id     = "log_expiration"
     status = "Enabled"
-
     expiration {
       days = 180
     }
@@ -618,15 +594,14 @@ resource "aws_lb" "my_alb" {
     aws_subnet.my_subnet_public_ingress_1a.id,
     aws_subnet.my_subnet_public_ingress_1c.id,
   ]
+  security_groups = [
+    module.my_sg_ingress.security_group_id,
+  ]
 
   access_logs {
     bucket  = aws_s3_bucket.my_alb_log.id
     enabled = true
   }
-
-  security_groups = [
-    module.my_sg_ingress.security_group_id,
-  ]
 }
 
 ## ALB Listener
@@ -634,10 +609,8 @@ resource "aws_lb_listener" "my_listener_http" {
   load_balancer_arn = aws_lb.my_alb.arn
   port              = "80"
   protocol          = "HTTP"
-
   default_action {
     type = "fixed-response"
-
     fixed_response {
       content_type = "text/plain"
       message_body = "This is HTTP"
@@ -673,12 +646,10 @@ resource "aws_lb_target_group" "my_target_group_frontend" {
 resource "aws_lb_listener_rule" "my_listener_rule_http" {
   listener_arn = aws_lb_listener.my_listener_http.arn
   priority     = 100
-
   action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.my_target_group_frontend.arn
   }
-
   condition {
     path_pattern {
       values = ["/*"]
@@ -693,11 +664,12 @@ resource "aws_lb" "my_internal_alb" {
   internal           = true
   idle_timeout       = 60
 
+  enable_deletion_protection = false
+
   subnets = [
     aws_subnet.my_subnet_private_app_1a.id,
     aws_subnet.my_subnet_private_app_1c.id,
   ]
-
   security_groups = [
     module.my_sg_internal.security_group_id,
   ]
@@ -707,10 +679,8 @@ resource "aws_lb_listener" "my_internal_listener_http" {
   load_balancer_arn = aws_lb.my_internal_alb.arn
   port              = "80"
   protocol          = "HTTP"
-
   default_action {
     type = "fixed-response"
-
     fixed_response {
       content_type = "text/plain"
       message_body = "Not Found"
@@ -744,12 +714,10 @@ resource "aws_lb_target_group" "my_target_group_backend" {
 resource "aws_lb_listener_rule" "my_internal_listener_rule" {
   listener_arn = aws_lb_listener.my_internal_listener_http.arn
   priority     = 100
-
   action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.my_target_group_backend.arn
   }
-
   condition {
     path_pattern {
       values = ["/*"]
@@ -800,6 +768,7 @@ resource "aws_ecs_cluster" "my_ecs_cluster" {
 }
 
 ## Task Definition
+## TODO: add task_role_arn
 resource "aws_ecs_task_definition" "my_frontend_task_definition" {
   family = "${var.environment}-${var.project_name}-frontend"
   cpu    = 1024
@@ -869,7 +838,7 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
       cpu       = 1024
       memory    = 1024
       essential = true
-      command: ["fastapi", "run", "--host", "0.0.0.0", "--port", "5175", "src/fastapi_celery/main.py"]
+      command : ["fastapi", "run", "--host", "0.0.0.0", "--port", "5175", "src/fastapi_celery/main.py"]
       portMappings = [
         {
           containerPort = 5175
@@ -902,8 +871,6 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
     }
   ])
 }
-
-# Worker Task Definition
 resource "aws_ecs_task_definition" "my_worker_task_definition" {
   family = "${var.environment}-${var.project_name}-worker"
   cpu    = 1024
@@ -951,13 +918,12 @@ resource "aws_ecs_task_definition" "my_worker_task_definition" {
 
 ## ECS Service
 resource "aws_ecs_service" "my_ecs_service_frontend" {
-  name                              = "${var.environment}-${var.project_name}-main-frontend"
-  cluster                           = aws_ecs_cluster.my_ecs_cluster.id
-  task_definition                   = aws_ecs_task_definition.my_frontend_task_definition.arn
-  desired_count                     = 1
-  launch_type                       = "FARGATE"
-  platform_version                  = "1.4.0"
-  health_check_grace_period_seconds = 60
+  name             = "${var.environment}-${var.project_name}-main-frontend"
+  cluster          = aws_ecs_cluster.my_ecs_cluster.id
+  task_definition  = aws_ecs_task_definition.my_frontend_task_definition.arn
+  desired_count    = 1
+  launch_type      = "FARGATE"
+  platform_version = "1.4.0"
 
   network_configuration {
     assign_public_ip = false
@@ -968,6 +934,7 @@ resource "aws_ecs_service" "my_ecs_service_frontend" {
     ]
   }
 
+  health_check_grace_period_seconds = 60
   load_balancer {
     target_group_arn = aws_lb_target_group.my_target_group_frontend.arn
     container_name   = "frontend"
@@ -977,13 +944,12 @@ resource "aws_ecs_service" "my_ecs_service_frontend" {
 }
 
 resource "aws_ecs_service" "my_ecs_service_backend" {
-  name                              = "${var.environment}-${var.project_name}-main-backend"
-  cluster                           = aws_ecs_cluster.my_ecs_cluster.id
-  task_definition                   = aws_ecs_task_definition.my_backend_task_definition.arn
-  desired_count                     = 1
-  launch_type                       = "FARGATE"
-  platform_version                  = "1.4.0"
-  health_check_grace_period_seconds = 60
+  name             = "${var.environment}-${var.project_name}-main-backend"
+  cluster          = aws_ecs_cluster.my_ecs_cluster.id
+  task_definition  = aws_ecs_task_definition.my_backend_task_definition.arn
+  desired_count    = 1
+  launch_type      = "FARGATE"
+  platform_version = "1.4.0"
 
   network_configuration {
     assign_public_ip = false
@@ -994,6 +960,7 @@ resource "aws_ecs_service" "my_ecs_service_backend" {
     ]
   }
 
+  health_check_grace_period_seconds = 60
   load_balancer {
     target_group_arn = aws_lb_target_group.my_target_group_backend.arn
     container_name   = "backend"
@@ -1002,14 +969,13 @@ resource "aws_ecs_service" "my_ecs_service_backend" {
 
 }
 
-# Worker ECS Service
 resource "aws_ecs_service" "my_ecs_service_worker" {
-  name                = "${var.environment}-${var.project_name}-main-worker"
-  cluster             = aws_ecs_cluster.my_ecs_cluster.id
-  task_definition     = aws_ecs_task_definition.my_worker_task_definition.arn
-  desired_count       = 1
-  launch_type         = "FARGATE"
-  platform_version    = "1.4.0"
+  name             = "${var.environment}-${var.project_name}-main-worker"
+  cluster          = aws_ecs_cluster.my_ecs_cluster.id
+  task_definition  = aws_ecs_task_definition.my_worker_task_definition.arn
+  desired_count    = 1
+  launch_type      = "FARGATE"
+  platform_version = "1.4.0"
 
   network_configuration {
     assign_public_ip = false
@@ -1059,36 +1025,32 @@ resource "aws_elasticache_parameter_group" "my_elasticache_parameter_group" {
   }
 }
 resource "aws_elasticache_subnet_group" "my_elasticache_subnet_group" {
-  name       = "${var.project_name}-elasticache-subnet-group"
+  name = "${var.project_name}-elasticache-subnet-group"
   subnet_ids = [
     aws_subnet.my_subnet_private_app_1a.id,
     aws_subnet.my_subnet_private_app_1c.id
   ]
 }
 resource "aws_elasticache_replication_group" "my_elasticache_replication_group" {
-  replication_group_id = "${var.project_name}-elasticache-replication-group"
-  description = "Redis without cluster"
-  engine = "redis"
-  engine_version = "7.0"
-  node_type = "cache.t3.medium"
-  num_cache_clusters = 2
-  snapshot_window = "09:10-10:10"
-  snapshot_retention_limit = 7
-  maintenance_window = "mon:10:40-mon:11:40"
+  replication_group_id       = "${var.project_name}-elasticache-replication-group"
+  description                = "Redis without cluster"
+  engine                     = "redis"
+  engine_version             = "7.0"
+  node_type                  = "cache.t3.medium"
+  num_cache_clusters         = 2
+  snapshot_window            = "09:10-10:10"
+  snapshot_retention_limit   = 7
+  maintenance_window         = "mon:10:40-mon:11:40"
   automatic_failover_enabled = true
-  port = 6379
-  apply_immediately = true
-  security_group_ids = [module.my_sg_redis.security_group_id]
-  parameter_group_name = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
-  subnet_group_name = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
+  port                       = 6379
+  apply_immediately          = true
+  security_group_ids         = [module.my_sg_redis.security_group_id]
+  parameter_group_name       = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
+  subnet_group_name          = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
 }
 
 
 # outputs.tf
-output "elasticache_primary_endpoint" {
-  value = aws_elasticache_replication_group.my_elasticache_replication_group.primary_endpoint_address
-}
-
 output "ecr_frontend_repository" {
   value = module.ecr_frontend.repository_url
 }

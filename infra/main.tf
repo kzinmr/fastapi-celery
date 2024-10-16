@@ -549,7 +549,7 @@ resource "aws_vpc_endpoint" "sbcntr_vpc_endpoint_logs" {
 }
 
 
-# S3 for ALB
+# S3 for ALB logging
 # https://docs.aws.amazon.com/ja_jp/elasticloadbalancing/latest/classic/enable-access-logs.html#attach-bucket-policy
 resource "aws_s3_bucket" "sbcntr_alb_log" {
   bucket        = "sbcntr-alb-log"
@@ -672,6 +672,76 @@ resource "aws_lb_listener_rule" "sbcntr_listener_rule_http" {
   }
 }
 
+# Internal ALB
+resource "aws_lb" "sbcntr_internal_alb" {
+  name               = "sbcntr-internal-alb"
+  load_balancer_type = "application"
+  internal           = true
+  idle_timeout       = 60
+
+  subnets = [
+    aws_subnet.sbcntr_subnet_private_app_1a.id,
+    aws_subnet.sbcntr_subnet_private_app_1c.id,
+  ]
+
+  security_groups = [
+    module.sbcntr_sg_internal.security_group_id,
+  ]
+}
+## Internal ALB Listener
+resource "aws_lb_listener" "sbcntr_internal_listener_http" {
+  load_balancer_arn = aws_lb.sbcntr_internal_alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not Found"
+      status_code  = "404"
+    }
+  }
+}
+# Internal ALB Target Group
+resource "aws_lb_target_group" "sbcntr_target_group_app" {
+  name                 = "sbcntr-target-group-app"
+  target_type          = "ip"
+  vpc_id               = aws_vpc.sbcntr_vpc.id
+  port                 = 5175
+  protocol             = "HTTP"
+  deregistration_delay = 300
+
+  health_check {
+    path                = "/health"
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    matcher             = 200
+    port                = "traffic-port"
+    protocol            = "HTTP"
+  }
+
+  depends_on = [aws_lb.sbcntr_internal_alb]
+}
+## Internal ALB Listener Rule
+resource "aws_lb_listener_rule" "sbcntr_internal_listener_rule" {
+  listener_arn = aws_lb_listener.sbcntr_internal_listener_http.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.sbcntr_target_group_app.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+}
 
 # ECS
 
@@ -717,29 +787,101 @@ resource "aws_ecs_cluster" "sbcntr_ecs_cluster" {
 }
 
 ## Task Definition
-resource "aws_ecs_task_definition" "sbcntr_task_definition" {
-  family = "sbcntr-task"
-  cpu    = 256
-  memory = 512
+resource "aws_ecs_task_definition" "sbcntr_front_app_task_definition" {
+  family                   = "sbcntr-task"
+  cpu                      = 1024
+  memory                   = 2048
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = "ARM64"
   }
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  container_definitions    = file("task_definition.json")
   execution_role_arn       = module.sbcntr_ecs_task_execution_role.iam_role_arn
+  container_definitions    = jsonencode([
+    {
+      name  = "sbcntr-front-app"
+      image = "${aws_ecr_repository.sbcntr_ecr_repository_frontend.repository_url}:latest"
+      cpu   = 256
+      memory = 512
+      essential = true
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+          protocol      = "tcp"
+        }
+      ]
+      environment = [
+        {
+          name  = "BACKEND_URL"
+          value = "http://${aws_lb.sbcntr_internal_alb.dns_name}"
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.sbcntr_log_group.name
+          awslogs-region        = "ap-northeast-1"
+          awslogs-stream-prefix = "front-app"
+        }
+      }
+    }
+  ])
+}
+resource "aws_ecs_task_definition" "sbcntr_app_task_definition" {
+  family                   = "sbcntr-task"
+  cpu                      = 1024
+  memory                   = 2048
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  execution_role_arn       = module.sbcntr_ecs_task_execution_role.iam_role_arn
+  container_definitions    = jsonencode([
+    {
+      name  = "sbcntr-backend-app"
+      image = "${aws_ecr_repository.sbcntr_ecr_repository_backend.repository_url}:latest"
+      cpu   = 768
+      memory = 1536
+      essential = true
+      portMappings = [
+        {
+          containerPort = 5175
+          hostPort      = 5175
+          protocol      = "tcp"
+        }
+      ]
+      environment = [
+        {
+          name  = "ENV"
+          value = "development"
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.sbcntr_log_group.name
+          awslogs-region        = "ap-northeast-1"
+          awslogs-stream-prefix = "backend-app"
+        }
+      }
+    }
+  ])
 }
 
-## Service
-resource "aws_ecs_service" "sbcntr_service" {
-  name                              = "sbcntr-service"
+## ECS Service
+resource "aws_ecs_service" "sbcntr_service_frontend" {
+  name                              = "sbcntr-service-frontend"
   cluster                           = aws_ecs_cluster.sbcntr_ecs_cluster.id
-  task_definition                   = aws_ecs_task_definition.sbcntr_task_definition.arn
+  task_definition                   = aws_ecs_task_definition.sbcntr_front_app_task_definition.arn
   desired_count                     = 1
   launch_type                       = "FARGATE"
   platform_version                  = "1.4.0"
   health_check_grace_period_seconds = 60
+
   network_configuration {
     assign_public_ip = false
     security_groups  = [module.sbcntr_sg_front_app.security_group_id]
@@ -748,11 +890,41 @@ resource "aws_ecs_service" "sbcntr_service" {
       aws_subnet.sbcntr_subnet_private_app_1c.id,
     ]
   }
+
   load_balancer {
     target_group_arn = aws_lb_target_group.sbcntr_target_group_front_app.arn
     container_name   = "sbcntr-front-app"
     container_port   = 80
   }
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+}
+resource "aws_ecs_service" "sbcntr_service_backend" {
+  name                              = "sbcntr-service-backend"
+  cluster                           = aws_ecs_cluster.sbcntr_ecs_cluster.id
+  task_definition                   = aws_ecs_task_definition.sbcntr_app_task_definition.arn
+  desired_count                     = 1
+  launch_type                       = "FARGATE"
+  platform_version                  = "1.4.0"
+  health_check_grace_period_seconds = 60
+
+  network_configuration {
+    assign_public_ip = false
+    security_groups  = [module.sbcntr_sg_app.security_group_id]
+    subnets = [
+      aws_subnet.sbcntr_subnet_private_app_1a.id,
+      aws_subnet.sbcntr_subnet_private_app_1c.id,
+    ]
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.sbcntr_target_group_app.arn
+    container_name   = "backend"
+    container_port   = 5175
+  }
+
   lifecycle {
     ignore_changes = [task_definition]
   }

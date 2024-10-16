@@ -3,7 +3,9 @@
 set -exu
 platform=${1:-linux/arm64}
 
+# AWS_ACCOUNT_ID と NAME と DIR と IMAGE_TAG は外から与えられる
 ENV="${ENV:-development}"
+PROJECT="fcdemo"
 
 DOCKER_REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com
 
@@ -23,6 +25,6 @@ fi
 docker buildx build ${RELEASE_OPT} \
   --platform="${platform}" \
   --progress=plain \
-  --tag "${DOCKER_REGISTRY}"/"${ENV}"/fcdemo/"${NAME}":"${IMAGE_TAG}" \
+  --tag "${DOCKER_REGISTRY}"/"${ENV}"/"${PROJECT}"/"${NAME}":"${IMAGE_TAG}" \
   -f "${DOCKER_FILE_PATH}" \
   .

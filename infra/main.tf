@@ -869,6 +869,7 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
       cpu       = 1024
       memory    = 1024
       essential = true
+      command: ["fastapi", "run", "--host", "0.0.0.0", "--port", "5175", "src/fastapi_celery/main.py"]
       portMappings = [
         {
           containerPort = 5175
@@ -880,6 +881,14 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
         {
           name  = "ENV"
           value = var.environment
+        },
+        {
+          name  = "CELERY_BROKER_URL"
+          value = "redis://${aws_elasticache_replication_group.my_elasticache_replication_group.primary_endpoint_address}:6379/0"
+        },
+        {
+          name  = "CELERY_RESULT_BACKEND"
+          value = "redis://${aws_elasticache_replication_group.my_elasticache_replication_group.primary_endpoint_address}:6379/0"
         }
       ]
       logConfiguration = {
@@ -888,6 +897,52 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
           awslogs-group         = aws_cloudwatch_log_group.my_log_group.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "backend"
+        }
+      }
+    }
+  ])
+}
+
+# Worker Task Definition
+resource "aws_ecs_task_definition" "my_worker_task_definition" {
+  family = "${var.environment}-${var.project_name}-worker"
+  cpu    = 1024
+  memory = 2048
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  execution_role_arn       = module.my_ecs_task_execution_role.iam_role_arn
+  container_definitions = jsonencode([
+    {
+      name      = "worker"
+      image     = "${module.ecr_backend.repository_url}:v0"
+      cpu       = 1024
+      memory    = 1024
+      essential = true
+      command   = ["celery", "-A", "src.fastapi_celery.worker.celery", "worker", "--loglevel=info"]
+      environment = [
+        {
+          name  = "ENV"
+          value = var.environment
+        },
+        {
+          name  = "CELERY_BROKER_URL"
+          value = "redis://${aws_elasticache_replication_group.my_elasticache_replication_group.primary_endpoint_address}:6379/0"
+        },
+        {
+          name  = "CELERY_RESULT_BACKEND"
+          value = "redis://${aws_elasticache_replication_group.my_elasticache_replication_group.primary_endpoint_address}:6379/0"
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.my_log_group.name
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "worker"
         }
       }
     }
@@ -947,6 +1002,25 @@ resource "aws_ecs_service" "my_ecs_service_backend" {
 
 }
 
+# Worker ECS Service
+resource "aws_ecs_service" "my_ecs_service_worker" {
+  name                = "${var.environment}-${var.project_name}-main-worker"
+  cluster             = aws_ecs_cluster.my_ecs_cluster.id
+  task_definition     = aws_ecs_task_definition.my_worker_task_definition.arn
+  desired_count       = 1
+  launch_type         = "FARGATE"
+  platform_version    = "1.4.0"
+
+  network_configuration {
+    assign_public_ip = false
+    security_groups  = [module.my_sg_backend.security_group_id]
+    subnets = [
+      aws_subnet.my_subnet_private_app_1a.id,
+      aws_subnet.my_subnet_private_app_1c.id,
+    ]
+  }
+}
+
 # KMS Key and SSM Parameter Store
 ## KMS Key
 resource "aws_kms_key" "my_kms_key" {
@@ -976,43 +1050,45 @@ resource "aws_kms_alias" "my_kms_key_alias" {
 # }
 
 # ElastiCache
-# resource "aws_elasticache_parameter_group" "my_elasticache_parameter_group" {
-#   name   = "${var.project_name}-elasticache-parameter-group"
-#   family = "redis7"
-#
-#   parameter {
-#     name  = "cluster-enabled"
-#     value = "no"
-#   }
-# }
-# resource "aws_elasticache_subnet_group" "my_elasticache_subnet_group" {
-#   name       = "${var.project_name}-elasticache-subnet-group"
-#   subnet_ids = [
-#     aws_subnet.my_subnet_private_app_1a.id,
-#     aws_subnet.my_subnet_private_app_1c.id
-#   ]
-# }
-#
-# resource "aws_elasticache_replication_group" "my_elasticache_replication_group" {
-#   replication_group_id = "${var.project_name}-elasticache-replication-group"
-#   description = "Redis without cluster"
-#   engine = "redis"
-#   engine_version = "7.0"
-#   node_type = "cache.t3.medium"
-#   num_cache_clusters = 2
-#   snapshot_window = "09:10-10:10"
-#   snapshot_retention_limit = 7
-#   maintenance_window = "mon:10:40-mon:11:40"
-#   automatic_failover_enabled = true
-#   port = 6379
-#   apply_immediately = true
-#   security_group_ids = [module.my_sg_redis.security_group_id]
-#   parameter_group_name = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
-#   subnet_group_name = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
-# }
+resource "aws_elasticache_parameter_group" "my_elasticache_parameter_group" {
+  name   = "${var.project_name}-elasticache-parameter-group"
+  family = "redis7"
+  parameter {
+    name  = "cluster-enabled"
+    value = "no"
+  }
+}
+resource "aws_elasticache_subnet_group" "my_elasticache_subnet_group" {
+  name       = "${var.project_name}-elasticache-subnet-group"
+  subnet_ids = [
+    aws_subnet.my_subnet_private_app_1a.id,
+    aws_subnet.my_subnet_private_app_1c.id
+  ]
+}
+resource "aws_elasticache_replication_group" "my_elasticache_replication_group" {
+  replication_group_id = "${var.project_name}-elasticache-replication-group"
+  description = "Redis without cluster"
+  engine = "redis"
+  engine_version = "7.0"
+  node_type = "cache.t3.medium"
+  num_cache_clusters = 2
+  snapshot_window = "09:10-10:10"
+  snapshot_retention_limit = 7
+  maintenance_window = "mon:10:40-mon:11:40"
+  automatic_failover_enabled = true
+  port = 6379
+  apply_immediately = true
+  security_group_ids = [module.my_sg_redis.security_group_id]
+  parameter_group_name = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
+  subnet_group_name = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
+}
 
 
 # outputs.tf
+output "elasticache_primary_endpoint" {
+  value = aws_elasticache_replication_group.my_elasticache_replication_group.primary_endpoint_address
+}
+
 output "ecr_frontend_repository" {
   value = module.ecr_frontend.repository_url
 }

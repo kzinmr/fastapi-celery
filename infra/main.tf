@@ -72,46 +72,20 @@ resource "aws_subnet" "my_subnet_private_app_1c" {
   }
 }
 
-## DB Subnets
-resource "aws_subnet" "my_subnet_private_db_1a" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = "10.0.16.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
-
-  tags = {
-    Name = "${var.project_name}-subnet-private-db-1a"
-    Type = "Isolated"
-  }
-}
-
-resource "aws_subnet" "my_subnet_private_db_1c" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = "10.0.17.0/24"
-  availability_zone = data.aws_availability_zones.available.names[1]
-
-  tags = {
-    Name = "${var.project_name}-subnet-private-db-1c"
-    Type = "Isolated"
-  }
-}
-
 ## Egress (VPC Endpoint) Subnets
 resource "aws_subnet" "my_subnet_private_egress_1a" {
   vpc_id            = aws_vpc.my_vpc.id
   cidr_block        = "10.0.248.0/24"
   availability_zone = data.aws_availability_zones.available.names[0]
-
   tags = {
     Name = "${var.project_name}-subnet-private-egress-1a"
     Type = "Isolated"
   }
 }
-
 resource "aws_subnet" "my_subnet_private_egress_1c" {
   vpc_id            = aws_vpc.my_vpc.id
   cidr_block        = "10.0.249.0/24"
   availability_zone = data.aws_availability_zones.available.names[1]
-
   tags = {
     Name = "${var.project_name}-subnet-private-egress-1c"
     Type = "Isolated"
@@ -131,43 +105,59 @@ resource "aws_subnet" "my_subnet_public_ingress_1a" {
     Type = "Public"
   }
 }
-
 resource "aws_subnet" "my_subnet_public_ingress_1c" {
   vpc_id                  = aws_vpc.my_vpc.id
   cidr_block              = var.public_subnet_cidrs[1]
   availability_zone       = data.aws_availability_zones.available.names[1]
   map_public_ip_on_launch = true
-
   tags = {
     Name = "${var.project_name}-subnet-public-ingress-1c"
     Type = "Public"
   }
 }
-
+## DB Subnets
+# resource "aws_subnet" "my_subnet_private_db_1a" {
+#   vpc_id            = aws_vpc.my_vpc.id
+#   cidr_block        = "10.0.16.0/24"
+#   availability_zone = data.aws_availability_zones.available.names[0]
+#
+#   tags = {
+#     Name = "${var.project_name}-subnet-private-db-1a"
+#     Type = "Isolated"
+#   }
+# }
+# resource "aws_subnet" "my_subnet_private_db_1c" {
+#   vpc_id            = aws_vpc.my_vpc.id
+#   cidr_block        = "10.0.17.0/24"
+#   availability_zone = data.aws_availability_zones.available.names[1]
+#
+#   tags = {
+#     Name = "${var.project_name}-subnet-private-db-1c"
+#     Type = "Isolated"
+#   }
+# }
 ## Management Subnets
-resource "aws_subnet" "my_subnet_public_management_1a" {
-  vpc_id                  = aws_vpc.my_vpc.id
-  cidr_block              = "10.0.240.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[0]
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "${var.project_name}-subnet-public-management-1a"
-    Type = "Public"
-  }
-}
-
-resource "aws_subnet" "my_subnet_public_management_1c" {
-  vpc_id                  = aws_vpc.my_vpc.id
-  cidr_block              = "10.0.241.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[1]
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "${var.project_name}-subnet-public-management-1c"
-    Type = "Public"
-  }
-}
+# resource "aws_subnet" "my_subnet_public_management_1a" {
+#   vpc_id                  = aws_vpc.my_vpc.id
+#   cidr_block              = "10.0.240.0/24"
+#   availability_zone       = data.aws_availability_zones.available.names[0]
+#   map_public_ip_on_launch = true
+#   tags = {
+#     Name = "${var.project_name}-subnet-public-management-1a"
+#     Type = "Public"
+#   }
+# }
+# resource "aws_subnet" "my_subnet_public_management_1c" {
+#   vpc_id                  = aws_vpc.my_vpc.id
+#   cidr_block              = "10.0.241.0/24"
+#   availability_zone       = data.aws_availability_zones.available.names[1]
+#   map_public_ip_on_launch = true
+#
+#   tags = {
+#     Name = "${var.project_name}-subnet-public-management-1c"
+#     Type = "Public"
+#   }
+# }
 
 
 # Internet Gateway
@@ -203,78 +193,61 @@ resource "aws_route_table_association" "public_1a" {
   route_table_id = aws_route_table.my_route_public.id
 }
 
-resource "aws_route_table_association" "public_1c" {
-  subnet_id      = aws_subnet.my_subnet_public_ingress_1c.id
-  route_table_id = aws_route_table.my_route_public.id
-}
-
-resource "aws_route_table_association" "management_1a" {
-  subnet_id      = aws_subnet.my_subnet_public_management_1a.id
-  route_table_id = aws_route_table.my_route_public.id
-}
-
-resource "aws_route_table_association" "management_1c" {
-  subnet_id      = aws_subnet.my_subnet_public_management_1c.id
-  route_table_id = aws_route_table.my_route_public.id
-}
+# resource "aws_route_table_association" "management_1a" {
+#   subnet_id      = aws_subnet.my_subnet_public_management_1a.id
+#   route_table_id = aws_route_table.my_route_public.id
+# }
+# resource "aws_route_table_association" "management_1c" {
+#   subnet_id      = aws_subnet.my_subnet_public_management_1c.id
+#   route_table_id = aws_route_table.my_route_public.id
+# }
 
 ## Private Subnetのルートテーブル
 ## コンテナ用ルートテーブル
 resource "aws_route_table" "my_route_backend_1a" {
   vpc_id = aws_vpc.my_vpc.id
-
   tags = {
     Name = "${var.project_name}-route-backend-1a"
   }
 }
-
-resource "aws_route_table" "my_route_backend_1c" {
-  vpc_id = aws_vpc.my_vpc.id
-
-  tags = {
-    Name = "${var.project_name}-route-backend-1c"
-  }
-}
-
 resource "aws_route_table_association" "my_route_backend_association_1a" {
   subnet_id      = aws_subnet.my_subnet_private_app_1a.id
   route_table_id = aws_route_table.my_route_backend_1a.id
 }
 
+resource "aws_route_table" "my_route_backend_1c" {
+  vpc_id = aws_vpc.my_vpc.id
+  tags = {
+    Name = "${var.project_name}-route-backend-1c"
+  }
+}
 resource "aws_route_table_association" "my_route_backend_association_1c" {
   subnet_id      = aws_subnet.my_subnet_private_app_1c.id
   route_table_id = aws_route_table.my_route_backend_1c.id
 }
 
 ## DB用のルートテーブル
-resource "aws_route_table" "my_route_db" {
-  vpc_id = aws_vpc.my_vpc.id
-
-  tags = {
-    Name = "${var.project_name}-route-db"
-  }
-}
-
-resource "aws_route_table_association" "my_route_db_association_1a" {
-  subnet_id      = aws_subnet.my_subnet_private_db_1a.id
-  route_table_id = aws_route_table.my_route_db.id
-}
-
-resource "aws_route_table_association" "my_route_db_association_1c" {
-  subnet_id      = aws_subnet.my_subnet_private_db_1c.id
-  route_table_id = aws_route_table.my_route_db.id
-}
+# resource "aws_route_table" "my_route_db" {
+#   vpc_id = aws_vpc.my_vpc.id
+#
+#   tags = {
+#     Name = "${var.project_name}-route-db"
+#   }
+# }
+# resource "aws_route_table_association" "my_route_db_association_1a" {
+#   subnet_id      = aws_subnet.my_subnet_private_db_1a.id
+#   route_table_id = aws_route_table.my_route_db.id
+# }
+# resource "aws_route_table_association" "my_route_db_association_1c" {
+#   subnet_id      = aws_subnet.my_subnet_private_db_1c.id
+#   route_table_id = aws_route_table.my_route_db.id
+# }
 
 # NAT Gateway
 resource "aws_eip" "my_eip_nat_gateway_1a" {
   domain     = "vpc"
   depends_on = [aws_internet_gateway.my_igw]
 }
-resource "aws_eip" "my_eip_nat_gateway_1c" {
-  domain     = "vpc"
-  depends_on = [aws_internet_gateway.my_igw]
-}
-
 resource "aws_nat_gateway" "my_nat_gateway_1a" {
   allocation_id = aws_eip.my_eip_nat_gateway_1a.id
   subnet_id     = aws_subnet.my_subnet_public_ingress_1a.id
@@ -285,28 +258,31 @@ resource "aws_nat_gateway" "my_nat_gateway_1a" {
     Name = "${var.project_name}-nat-gateway-1a"
   }
 }
-resource "aws_nat_gateway" "my_nat_gateway_1c" {
-  allocation_id = aws_eip.my_eip_nat_gateway_1c.id
-  subnet_id     = aws_subnet.my_subnet_public_ingress_1c.id
-
-  depends_on = [aws_internet_gateway.my_igw]
-
-  tags = {
-    Name = "${var.project_name}-nat-gateway-1c"
-  }
-}
-
 resource "aws_route" "my_route_backend_nat_gateway_1a" {
   route_table_id         = aws_route_table.my_route_backend_1a.id
   nat_gateway_id         = aws_nat_gateway.my_nat_gateway_1a.id
   destination_cidr_block = "0.0.0.0/0"
 }
-resource "aws_route" "my_route_backend_nat_gateway_1c" {
-  route_table_id         = aws_route_table.my_route_backend_1c.id
-  nat_gateway_id         = aws_nat_gateway.my_nat_gateway_1c.id
-  destination_cidr_block = "0.0.0.0/0"
-}
 
+# resource "aws_eip" "my_eip_nat_gateway_1c" {
+#   domain     = "vpc"
+#   depends_on = [aws_internet_gateway.my_igw]
+# }
+# resource "aws_nat_gateway" "my_nat_gateway_1c" {
+#   allocation_id = aws_eip.my_eip_nat_gateway_1c.id
+#   subnet_id     = aws_subnet.my_subnet_public_ingress_1c.id
+#
+#   depends_on = [aws_internet_gateway.my_igw]
+#
+#   tags = {
+#     Name = "${var.project_name}-nat-gateway-1c"
+#   }
+# }
+# resource "aws_route" "my_route_backend_nat_gateway_1c" {
+#   route_table_id         = aws_route_table.my_route_backend_1c.id
+#   nat_gateway_id         = aws_nat_gateway.my_nat_gateway_1c.id
+#   destination_cidr_block = "0.0.0.0/0"
+# }
 
 # Security Groups
 module "my_sg_ingress" {
@@ -369,24 +345,7 @@ module "my_sg_redis" {
     Name = "${var.project_name}-sg-redis"
   }
 }
-module "my_sg_db" {
-  source      = "./security_group"
-  name        = "database"
-  vpc_id      = aws_vpc.my_vpc.id
-  description = "Security Group of database"
-  tags = {
-    Name = "${var.project_name}-sg-db"
-  }
-}
-module "my_sg_management" {
-  source      = "./security_group"
-  name        = "management"
-  vpc_id      = aws_vpc.my_vpc.id
-  description = "Security Group of management server"
-  tags = {
-    Name = "${var.project_name}-sg-management"
-  }
-}
+
 module "my_sg_egress" {
   source      = "./security_group"
   name        = "egress"
@@ -397,11 +356,30 @@ module "my_sg_egress" {
   }
 }
 
+// module "my_sg_db" {
+//   source      = "./security_group"
+//   name        = "database"
+//   vpc_id      = aws_vpc.my_vpc.id
+//   description = "Security Group of database"
+//   tags = {
+//     Name = "${var.project_name}-sg-db"
+//   }
+// }
+// module "my_sg_management" {
+//   source      = "./security_group"
+//   name        = "management"
+//   vpc_id      = aws_vpc.my_vpc.id
+//   description = "Security Group of management server"
+//   tags = {
+//     Name = "${var.project_name}-sg-management"
+//   }
+// }
+
 # Security Group Rules
 ## Internet (Ingress) LB -> Frontend Container
 resource "aws_security_group_rule" "my_sg_frontend_from_sg_ingress" {
   type                     = "ingress"
-  from_port                = 80
+  from_port                = 5174
   to_port                  = 5174
   protocol                 = "tcp"
   source_security_group_id = module.my_sg_ingress.security_group_id
@@ -411,8 +389,8 @@ resource "aws_security_group_rule" "my_sg_frontend_from_sg_ingress" {
 ## Front Container -> Internal LB
 resource "aws_security_group_rule" "my_sg_internal_from_sg_frontend" {
   type                     = "ingress"
-  from_port                = 5175
-  to_port                  = 5175
+  from_port                = 80
+  to_port                  = 80
   protocol                 = "tcp"
   source_security_group_id = module.my_sg_frontend.security_group_id
   security_group_id        = module.my_sg_internal.security_group_id
@@ -438,38 +416,6 @@ resource "aws_security_group_rule" "my_sg_redis_from_sg_backend" {
   security_group_id        = module.my_sg_redis.security_group_id
   description              = "Redis protocol from backend App"
 }
-## Backend Container -> DB
-resource "aws_security_group_rule" "my_sg_db_from_sg_backend" {
-  type                     = "ingress"
-  from_port                = 3306
-  to_port                  = 3306
-  protocol                 = "tcp"
-  source_security_group_id = module.my_sg_backend.security_group_id
-  security_group_id        = module.my_sg_db.security_group_id
-  description              = "DB protocol from backend App"
-}
-
-## Management server -> DB
-resource "aws_security_group_rule" "my_sg_db_from_sg_management" {
-  type                     = "ingress"
-  from_port                = 3306
-  to_port                  = 3306
-  protocol                 = "tcp"
-  source_security_group_id = module.my_sg_management.security_group_id
-  security_group_id        = module.my_sg_db.security_group_id
-  description              = "DB protocol from management server"
-}
-## Management server -> Internal LB
-resource "aws_security_group_rule" "my_sg_internal_from_sg_management" {
-  type                     = "ingress"
-  from_port                = 5175
-  to_port                  = 5175
-  protocol                 = "tcp"
-  source_security_group_id = module.my_sg_management.security_group_id
-  security_group_id        = module.my_sg_internal.security_group_id
-  description              = "HTTP for management server"
-}
-
 ## Backend container -> VPC endpoint
 resource "aws_security_group_rule" "my_sg_vpce_from_sg_backend" {
   type                     = "ingress"
@@ -490,16 +436,47 @@ resource "aws_security_group_rule" "my_sg_vpce_from_sg_frontend" {
   security_group_id        = module.my_sg_egress.security_group_id
   description              = "HTTPS for the frontend"
 }
-## Management server -> VPC endpoint
-resource "aws_security_group_rule" "my_sg_vpce_from_sg_management" {
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  source_security_group_id = module.my_sg_management.security_group_id
-  security_group_id        = module.my_sg_egress.security_group_id
-  description              = "HTTPS for management server"
-}
+
+// ## Backend Container -> DB
+// resource "aws_security_group_rule" "my_sg_db_from_sg_backend" {
+//   type                     = "ingress"
+//   from_port                = 3306
+//   to_port                  = 3306
+//   protocol                 = "tcp"
+//   source_security_group_id = module.my_sg_backend.security_group_id
+//   security_group_id        = module.my_sg_db.security_group_id
+//   description              = "DB protocol from backend App"
+// }
+// ## Management server -> DB
+// resource "aws_security_group_rule" "my_sg_db_from_sg_management" {
+//   type                     = "ingress"
+//   from_port                = 3306
+//   to_port                  = 3306
+//   protocol                 = "tcp"
+//   source_security_group_id = module.my_sg_management.security_group_id
+//   security_group_id        = module.my_sg_db.security_group_id
+//   description              = "DB protocol from management server"
+// }
+// ## Management server -> Internal LB
+// resource "aws_security_group_rule" "my_sg_internal_from_sg_management" {
+//   type                     = "ingress"
+//   from_port                = 80
+//   to_port                  = 80
+//   protocol                 = "tcp"
+//   source_security_group_id = module.my_sg_management.security_group_id
+//   security_group_id        = module.my_sg_internal.security_group_id
+//   description              = "HTTP for management server"
+// }
+// ## Management server -> VPC endpoint
+// resource "aws_security_group_rule" "my_sg_vpce_from_sg_management" {
+//   type                     = "ingress"
+//   from_port                = 443
+//   to_port                  = 443
+//   protocol                 = "tcp"
+//   source_security_group_id = module.my_sg_management.security_group_id
+//   security_group_id        = module.my_sg_egress.security_group_id
+//   description              = "HTTPS for management server"
+// }
 
 
 # ECR
@@ -520,69 +497,66 @@ module "ecr_backend" {
   }
 }
 module "ecr_base_nginx" {
-  source          = "./ecr"
-  repository_name = "${var.environment}/${var.project_name}/base/nginx"
+  source              = "./ecr"
+  repository_name     = "${var.environment}/${var.project_name}/base/nginx"
   image_count_to_keep = 3
   tags = {
     Environment = var.environment
     Project     = var.project_name
   }
 }
-module "ecr_base_bastion" {
-  source          = "./ecr"
-  repository_name = "${var.environment}/${var.project_name}/base/bastion"
-  image_count_to_keep = 3
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-  }
-}
+
+# module "ecr_base_bastion" {
+#   source          = "./ecr"
+#   repository_name = "${var.environment}/${var.project_name}/base/bastion"
+#   image_count_to_keep = 3
+#   tags = {
+#     Environment = var.environment
+#     Project     = var.project_name
+#   }
+# }
 
 # VPC Endpoint for ECS & ECR
 # See. https://docs.aws.amazon.com/ja_jp/AmazonECR/latest/userguide/vpc-endpoints.html
 ## for `aws ecr get-login-password`
 resource "aws_vpc_endpoint" "my_vpc_endpoint_ecr_api" {
-  vpc_id       = aws_vpc.my_vpc.id
-  service_name = "com.amazonaws.${var.aws_region}.ecr.api"
-  vpc_endpoint_type = "Interface"
+  vpc_id             = aws_vpc.my_vpc.id
+  service_name       = "com.amazonaws.${var.aws_region}.ecr.api"
+  vpc_endpoint_type  = "Interface"
   security_group_ids = [module.my_sg_egress.security_group_id]
-
   tags = {
     Name = "${var.project_name}-vpc-endpoint-ecr-api"
   }
 }
 ## for `docker image push`
 resource "aws_vpc_endpoint" "my_vpc_endpoint_ecr_dkr" {
-  vpc_id       = aws_vpc.my_vpc.id
-  service_name = "com.amazonaws.${var.aws_region}.ecr.dkr"
-  vpc_endpoint_type = "Interface"
+  vpc_id             = aws_vpc.my_vpc.id
+  service_name       = "com.amazonaws.${var.aws_region}.ecr.dkr"
+  vpc_endpoint_type  = "Interface"
   security_group_ids = [module.my_sg_egress.security_group_id]
-
   tags = {
     Name = "${var.project_name}-vpc-endpoint-ecr-dkr"
   }
 }
 ## for pulling from S3
 resource "aws_vpc_endpoint" "my_vpc_endpoint_s3" {
-  vpc_id       = aws_vpc.my_vpc.id
-  service_name = "com.amazonaws.${var.aws_region}.s3"
+  vpc_id            = aws_vpc.my_vpc.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids = [
     aws_route_table.my_route_backend_1a.id,
     aws_route_table.my_route_backend_1c.id,
   ]
-
   tags = {
     Name = "${var.project_name}-vpc-endpoint-s3"
   }
 }
 ## for CloudWatch Logs from ECS Fargate
 resource "aws_vpc_endpoint" "my_vpc_endpoint_logs" {
-  vpc_id       = aws_vpc.my_vpc.id
-  service_name = "com.amazonaws.${var.aws_region}.logs"
-  vpc_endpoint_type = "Interface"
+  vpc_id             = aws_vpc.my_vpc.id
+  service_name       = "com.amazonaws.${var.aws_region}.logs"
+  vpc_endpoint_type  = "Interface"
   security_group_ids = [module.my_sg_egress.security_group_id]
-
   tags = {
     Name = "${var.project_name}-vpc-endpoint-logs"
   }
@@ -731,7 +705,7 @@ resource "aws_lb" "my_internal_alb" {
 ## Internal ALB Listener
 resource "aws_lb_listener" "my_internal_listener_http" {
   load_balancer_arn = aws_lb.my_internal_alb.arn
-  port              = "5175"
+  port              = "80"
   protocol          = "HTTP"
 
   default_action {
@@ -827,9 +801,9 @@ resource "aws_ecs_cluster" "my_ecs_cluster" {
 
 ## Task Definition
 resource "aws_ecs_task_definition" "my_frontend_task_definition" {
-  family                   = "${var.environment}-${var.project_name}-frontend"
-  cpu                      = 1024
-  memory                   = 2048
+  family = "${var.environment}-${var.project_name}-frontend"
+  cpu    = 1024
+  memory = 2048
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = "ARM64"
@@ -837,16 +811,16 @@ resource "aws_ecs_task_definition" "my_frontend_task_definition" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   execution_role_arn       = module.my_ecs_task_execution_role.iam_role_arn
-  container_definitions    = jsonencode([
+  container_definitions = jsonencode([
     {
-      name  = "frontend"
-      image = "${module.ecr_frontend.repository_url}:latest"
-      cpu   = 512
-      memory = 1024
+      name      = "frontend"
+      image     = "${module.ecr_frontend.repository_url}:v0"
+      cpu       = 512
+      memory    = 1024
       essential = true
       portMappings = [
         {
-          name = "frontend"
+          name          = "frontend"
           containerPort = 5174
           hostPort      = 5174
           protocol      = "tcp"
@@ -854,12 +828,16 @@ resource "aws_ecs_task_definition" "my_frontend_task_definition" {
       ]
       environment = [
         {
-          "name": "ENV",
-          "value": "${var.environment}"
+          name  = "ENV"
+          value = var.environment
         },
         {
           name  = "BACKEND_URL"
-          value = "http://${aws_lb.my_internal_alb.dns_name}:5175"
+          value = "http://${aws_lb.my_internal_alb.dns_name}"
+        },
+        {
+          name  = "APP_PORT"
+          value = "5174"
         }
       ]
       logConfiguration = {
@@ -874,9 +852,9 @@ resource "aws_ecs_task_definition" "my_frontend_task_definition" {
   ])
 }
 resource "aws_ecs_task_definition" "my_backend_task_definition" {
-  family                   = "${var.environment}-${var.project_name}-backend"
-  cpu                      = 1024
-  memory                   = 2048
+  family = "${var.environment}-${var.project_name}-backend"
+  cpu    = 1024
+  memory = 2048
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = "ARM64"
@@ -884,12 +862,12 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   execution_role_arn       = module.my_ecs_task_execution_role.iam_role_arn
-  container_definitions    = jsonencode([
+  container_definitions = jsonencode([
     {
-      name  = "backend"
-      image = "${module.ecr_backend.repository_url}:latest"
-      cpu   = 1024
-      memory = 1024
+      name      = "backend"
+      image     = "${module.ecr_backend.repository_url}:v0"
+      cpu       = 1024
+      memory    = 1024
       essential = true
       portMappings = [
         {
@@ -901,7 +879,7 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
       environment = [
         {
           name  = "ENV"
-          value = "development"
+          value = var.environment
         }
       ]
       logConfiguration = {
@@ -918,7 +896,7 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
 
 ## ECS Service
 resource "aws_ecs_service" "my_ecs_service_frontend" {
-  name                              = "${var.environment}-${var.project_name}-main/frontend"
+  name                              = "${var.environment}-${var.project_name}-main-frontend"
   cluster                           = aws_ecs_cluster.my_ecs_cluster.id
   task_definition                   = aws_ecs_task_definition.my_frontend_task_definition.arn
   desired_count                     = 1
@@ -941,12 +919,10 @@ resource "aws_ecs_service" "my_ecs_service_frontend" {
     container_port   = 5174
   }
 
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
 }
+
 resource "aws_ecs_service" "my_ecs_service_backend" {
-  name                              = "${var.environment}-${var.project_name}-main/backend"
+  name                              = "${var.environment}-${var.project_name}-main-backend"
   cluster                           = aws_ecs_cluster.my_ecs_cluster.id
   task_definition                   = aws_ecs_task_definition.my_backend_task_definition.arn
   desired_count                     = 1
@@ -969,21 +945,18 @@ resource "aws_ecs_service" "my_ecs_service_backend" {
     container_port   = 5175
   }
 
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
 }
 
 # KMS Key and SSM Parameter Store
 ## KMS Key
 resource "aws_kms_key" "my_kms_key" {
-  description = "KMS Key for ECS Task Execution"
-  enable_key_rotation = true
-  is_enabled = true
+  description             = "KMS Key for ECS Task Execution"
+  enable_key_rotation     = true
+  is_enabled              = true
   deletion_window_in_days = 30
 }
 resource "aws_kms_alias" "my_kms_key_alias" {
-  name = "alias/${var.project_name}-kms-key"
+  name          = "alias/${var.project_name}-kms-key"
   target_key_id = aws_kms_key.my_kms_key.key_id
 }
 # KMS Secrets per Environment; See. README.md
@@ -1003,7 +976,6 @@ resource "aws_kms_alias" "my_kms_key_alias" {
 # }
 
 # ElastiCache
-# Start of Selection
 # resource "aws_elasticache_parameter_group" "my_elasticache_parameter_group" {
 #   name   = "${var.project_name}-elasticache-parameter-group"
 #   family = "redis7"
@@ -1013,10 +985,12 @@ resource "aws_kms_alias" "my_kms_key_alias" {
 #     value = "no"
 #   }
 # }
-#
 # resource "aws_elasticache_subnet_group" "my_elasticache_subnet_group" {
 #   name       = "${var.project_name}-elasticache-subnet-group"
-#   subnet_ids = [aws_subnet.my_subnet_private_app_1a.id, aws_subnet.my_subnet_private_app_1c.id]
+#   subnet_ids = [
+#     aws_subnet.my_subnet_private_app_1a.id,
+#     aws_subnet.my_subnet_private_app_1c.id
+#   ]
 # }
 #
 # resource "aws_elasticache_replication_group" "my_elasticache_replication_group" {
@@ -1036,7 +1010,6 @@ resource "aws_kms_alias" "my_kms_key_alias" {
 #   parameter_group_name = aws_elasticache_parameter_group.my_elasticache_parameter_group.name
 #   subnet_group_name = aws_elasticache_subnet_group.my_elasticache_subnet_group.name
 # }
-# End of Selection
 
 
 # outputs.tf

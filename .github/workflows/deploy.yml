@@ -5,7 +5,7 @@ env:
   TZ: Asia/Tokyo
   AWS_REGION: ap-northeast-1
   AWS_ACCOUNT_ID: 123456789012
-  AWS_ROLE_TO_ASSUME: development-sbcntr-oidc-github
+  AWS_ROLE_TO_ASSUME: development-fcdemo-oidc-github
 
 on:
   push:
@@ -31,10 +31,10 @@ jobs:
         include:
           - dir: frontend
             name: frontend
-            task_definition_file: sbcntr_frontend.json
+            task_definition_file: fcdemo_frontend.json
           - name: backend
             dir: backend
-            task_definition_file: sbcntr_backend.json
+            task_definition_file: fcdemo_backend.json
 
     steps:
       - name: Set current datetime
@@ -74,7 +74,7 @@ jobs:
             cd ..
           fi
           ENV=${{ env.ENV }} NAME=${{ matrix.name }} DIR=${{ matrix.dir }} IMAGE_TAG=$IMAGE_TAG RELEASE=true ./build/build.sh $platform
-          echo "image=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ env.ENV }}/sbcntr/${{ matrix.name }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ env.ENV }}/fcdemo/${{ matrix.name }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Replace variables in task definition
         run: |
@@ -93,6 +93,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.rendering-task-definition.outputs.task-definition }}
-          cluster: ${{ env.ENV }}-sbcntr-main
-          service: ${{ env.ENV }}-sbcntr-main/${{ matrix.name }}
+          cluster: ${{ env.ENV }}-fcdemo-main
+          service: ${{ env.ENV }}-fcdemo-main/${{ matrix.name }}
           wait-for-service-stability: true

@@ -1,16 +1,17 @@
 {
   "containerDefinitions": [
     {
-      "name": "backend",
-      "image": "{aws_account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/development/sbcntr/backend:latest",
-      "cpu": 1024,
+      "name": "frontend",
+      "image": "{aws_account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/development/fcdemo/frontend:latest",
+      "cpu": 512,
       "memory": 1024,
       "portMappings": [
         {
-          "name": "backend",
-          "containerPort": 5175,
-          "hostPort": 5175,
-          "protocol": "tcp"
+          "name": "frontend",
+          "containerPort": 5174,
+          "hostPort": 5174,
+          "protocol": "tcp",
+          "appProtocol": "http"
         }
       ],
       "essential": true,
@@ -18,6 +19,10 @@
         {
           "name": "ENV",
           "value": "development"
+        },
+        {
+          "name": "SERVER_URL",
+          "value": "http://backend:5175"
         }
       ],
       "mountPoints": [],
@@ -45,11 +50,11 @@
       "environment": [
         {
           "name": "LOG_GROUP_NAME",
-          "value": "ecs/development-sbcntr-main/backend"
+          "value": "ecs/development-fcdemo-main/frontend"
         },
         {
           "name": "aws_fluent_bit_init_s3_1",
-          "value": "arn:aws:s3:::development-sbcntr-fluentbit-config/sbcntr/extra.conf"
+          "value": "arn:aws:s3:::development-fcdemo-fluentbit-config/fcdemo/extra.conf"
         },
         {
           "name": "aws_fluent_bit_init_file_1",
@@ -57,7 +62,7 @@
         },
         {
           "name": "FIREHOSE_DELIVERY_STREAM_NAME",
-          "value": "development-sbcntr-fluentbit-log-router"
+          "value": "development-fcdemo-fluentbit-log-router"
         }
       ],
       "mountPoints": [],
@@ -67,7 +72,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "ecs/fluentbit-log-router/development-sbcntr-main/backend",
+          "awslogs-group": "ecs/fluentbit-log-router/development-fcdemo-main/frontend",
           "awslogs-region": "ap-northeast-1",
           "awslogs-stream-prefix": "fluentbit"
         }
@@ -77,13 +82,13 @@
       }
     }
   ],
-  "family": "development-sbcntr-backend",
-  "taskRoleArn": "arn:aws:iam::{aws_account_id}:role/development-sbcntr-ecs-backend",
-  "executionRoleArn": "arn:aws:iam::{aws_account_id}:role/development-sbcntr-ecs-execution-role",
+  "family": "development-fcdemo-frontend",
+  "taskRoleArn": "arn:aws:iam::{aws_account_id}:role/development-fcdemo-ecs-frontend",
+  "executionRoleArn": "arn:aws:iam::{aws_account_id}:role/development-fcdemo-ecs-execution-role",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "2048",
-  "memory": "4096",
+  "cpu": "1024",
+  "memory": "2048",
   "runtimePlatform": {
     "cpuArchitecture": "ARM64",
     "operatingSystemFamily": "LINUX"
@@ -91,7 +96,7 @@
   "tags": [
     {
       "key": "Project",
-      "value": "sbcntr"
+      "value": "fcdemo"
     },
     {
       "key": "Environment",
@@ -99,7 +104,7 @@
     },
     {
       "key": "Service",
-      "value": "sbcntr"
+      "value": "fcdemo"
     },
     {
       "key": "CreatedBy",

@@ -23,6 +23,6 @@ fi
 docker buildx build ${RELEASE_OPT} \
   --platform="${platform}" \
   --progress=plain \
-  --tag "${DOCKER_REGISTRY}"/"${ENV}"/ai-review/"${NAME}":"${IMAGE_TAG}" \
+  --tag "${DOCKER_REGISTRY}"/"${ENV}"/fcdemo/"${NAME}":"${IMAGE_TAG}" \
   -f "${DOCKER_FILE_PATH}" \
   .

@@ -402,7 +402,7 @@ module "my_sg_egress" {
 resource "aws_security_group_rule" "my_sg_frontend_from_sg_ingress" {
   type                     = "ingress"
   from_port                = 80
-  to_port                  = 80
+  to_port                  = 5174
   protocol                 = "tcp"
   source_security_group_id = module.my_sg_ingress.security_group_id
   security_group_id        = module.my_sg_frontend.security_group_id
@@ -462,8 +462,8 @@ resource "aws_security_group_rule" "my_sg_db_from_sg_management" {
 ## Management server -> Internal LB
 resource "aws_security_group_rule" "my_sg_internal_from_sg_management" {
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = 5175
+  to_port                  = 5175
   protocol                 = "tcp"
   source_security_group_id = module.my_sg_management.security_group_id
   security_group_id        = module.my_sg_internal.security_group_id
@@ -677,7 +677,7 @@ resource "aws_lb_target_group" "my_target_group_frontend" {
   name                 = "${var.project_name}-target-group-frontend"
   target_type          = "ip"
   vpc_id               = aws_vpc.my_vpc.id
-  port                 = 80
+  port                 = 5174
   protocol             = "HTTP"
   deregistration_delay = 300
 
@@ -827,7 +827,7 @@ resource "aws_ecs_cluster" "my_ecs_cluster" {
 
 ## Task Definition
 resource "aws_ecs_task_definition" "my_frontend_task_definition" {
-  family                   = "${var.project_name}-task"
+  family                   = "${var.environment}-${var.project_name}-task"
   cpu                      = 1024
   memory                   = 2048
   runtime_platform {
@@ -839,22 +839,27 @@ resource "aws_ecs_task_definition" "my_frontend_task_definition" {
   execution_role_arn       = module.my_ecs_task_execution_role.iam_role_arn
   container_definitions    = jsonencode([
     {
-      name  = "${var.project_name}-frontend"
+      name  = "frontend"
       image = "${module.ecr_frontend.repository_url}:latest"
       cpu   = 512
       memory = 1024
       essential = true
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          name = "frontend"
+          containerPort = 5174
+          hostPort      = 5174
           protocol      = "tcp"
         }
       ]
       environment = [
         {
+          "name": "ENV",
+          "value": "${var.environment}"
+        },
+        {
           name  = "BACKEND_URL"
-          value = "http://${aws_lb.my_internal_alb.dns_name}"
+          value = "http://${aws_lb.my_internal_alb.dns_name}:5175"
         }
       ]
       logConfiguration = {
@@ -869,7 +874,7 @@ resource "aws_ecs_task_definition" "my_frontend_task_definition" {
   ])
 }
 resource "aws_ecs_task_definition" "my_backend_task_definition" {
-  family                   = "${var.project_name}-task"
+  family                   = "${var.environment}-${var.project_name}-task"
   cpu                      = 1024
   memory                   = 2048
   runtime_platform {
@@ -881,7 +886,7 @@ resource "aws_ecs_task_definition" "my_backend_task_definition" {
   execution_role_arn       = module.my_ecs_task_execution_role.iam_role_arn
   container_definitions    = jsonencode([
     {
-      name  = "${var.project_name}-backend"
+      name  = "backend"
       image = "${module.ecr_backend.repository_url}:latest"
       cpu   = 1024
       memory = 1024
@@ -933,7 +938,7 @@ resource "aws_ecs_service" "my_ecs_service_frontend" {
   load_balancer {
     target_group_arn = aws_lb_target_group.my_target_group_frontend.arn
     container_name   = "${var.project_name}-frontend"
-    container_port   = 80
+    container_port   = 5174
   }
 
   lifecycle {

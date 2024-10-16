@@ -5,6 +5,7 @@
       "image": "{aws_account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/development/fcdemo/frontend:latest",
       "cpu": 512,
       "memory": 1024,
+      "essential": true,
       "portMappings": [
         {
           "name": "frontend",
@@ -14,71 +15,27 @@
           "appProtocol": "http"
         }
       ],
-      "essential": true,
       "environment": [
         {
           "name": "ENV",
           "value": "development"
         },
         {
-          "name": "SERVER_URL",
+          "name": "BACKEND_URL",
           "value": "http://backend:5175"
         }
       ],
       "mountPoints": [],
       "volumesFrom": [],
       "secrets": [],
-      "dependsOn": [
-        {
-          "containerName": "fluentbit",
-          "condition": "START"
-        }
-      ],
-      "readonlyRootFilesystem": false,
-      "logConfiguration": {
-        "logDriver": "awsfirelens"
-      }
-    },
-    {
-      "name": "fluentbit",
-      "image": "public.ecr.aws/aws-observability/aws-for-fluent-bit:init-latest",
-      "cpu": 256,
-      "memory": 512,
-      "memoryReservation": 256,
-      "portMappings": [],
-      "essential": true,
-      "environment": [
-        {
-          "name": "LOG_GROUP_NAME",
-          "value": "ecs/development-fcdemo-main/frontend"
-        },
-        {
-          "name": "aws_fluent_bit_init_s3_1",
-          "value": "arn:aws:s3:::development-fcdemo-fluentbit-config/fcdemo/extra.conf"
-        },
-        {
-          "name": "aws_fluent_bit_init_file_1",
-          "value": "/fluent-bit/parsers/parsers.conf"
-        },
-        {
-          "name": "FIREHOSE_DELIVERY_STREAM_NAME",
-          "value": "development-fcdemo-fluentbit-log-router"
-        }
-      ],
-      "mountPoints": [],
-      "volumesFrom": [],
-      "user": "0",
       "readonlyRootFilesystem": false,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "ecs/fluentbit-log-router/development-fcdemo-main/frontend",
+          "awslog-group": "/ecs/development-fcdemo-main",
           "awslogs-region": "ap-northeast-1",
-          "awslogs-stream-prefix": "fluentbit"
+          "awslogs-stream-prefix": "frontend"
         }
-      },
-      "firelensConfiguration": {
-        "type": "fluentbit"
       }
     }
   ],
@@ -104,7 +61,7 @@
     },
     {
       "key": "Service",
-      "value": "fcdemo"
+      "value": "fcdemo-service-frontend"
     },
     {
       "key": "CreatedBy",
